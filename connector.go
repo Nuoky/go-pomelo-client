@@ -133,11 +133,13 @@ func (c *Connector) Run(addr string) error {
 	c.conn = conn
 	c.connecting = true
 
+	// 持续在后台监听send过来的数据并写入
 	go c.write()
 
 	c.send(c.handshakeData)
 
-	err = c.read()
+	// 持续在后台接收数据处理后传入processPacket
+	go c.read()
 
 	return err
 }
@@ -259,19 +261,21 @@ func (c *Connector) send(data []byte) {
 	c.chSend <- data
 }
 
-func (c *Connector) read() error {
+func (c *Connector) read() {
 	buf := make([]byte, 2048)
 
 	for {
 		// time.Sleep(time.Second)
 		if c.IsClosed() {
-			return errors.New("連線已經關閉")
+			log.Println("連線已經關閉")
+			// return errors.New("連線已經關閉")
 		}
 		n, err := c.conn.Read(buf)
 		if err != nil {
-			// log.Println("讀取資料失敗", err.Error())
+			log.Println("讀取資料失敗", err.Error())
 			c.Close()
-			return err
+			return
+			// return err
 			// continue
 		}
 
@@ -279,8 +283,8 @@ func (c *Connector) read() error {
 		if err != nil {
 			// log.Println("解碼資料失敗", err.Error())
 			// c.Close()
-			// return
-			continue
+			return
+			// continue
 		}
 
 		for i := range packets {
