@@ -263,7 +263,7 @@ func (c *Connector) read() error {
 	buf := make([]byte, 2048)
 
 	for {
-		time.Sleep(time.Second)
+		// time.Sleep(time.Second)
 		if c.IsClosed() {
 			return errors.New("連線已經關閉")
 		}
